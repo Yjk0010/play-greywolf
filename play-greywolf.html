@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>铁打灰太狼</title>
+		<style type="text/css">
+			*{
+				margin: 0;
+				padding: 0;
+			}
+			#outer{
+				width: 320px;
+				height: 480px;   
+				margin:0 auto;
+				background: url(img/game_bg.jpg) 0 0 no-repeat;
+				position: relative;
+			}
+			#score{
+				position: absolute;
+				left: 60px;
+				top: 11px;
+				color: #fff;
+				font-size: 20px;
+				font-weight: bold;
+				font-family: arial;
+			}
+			#timeBar{
+				position: absolute;
+				width: 180px;height: 16px;
+				left: 63px;top: 66px;
+				background: url(img/progress.png) 0 0 no-repeat;
+			}
+			#menu{
+				position: absolute;
+				left: 0;top: 390px;
+				width: 100%;
+			}
+			#menu>a{
+				color: #f60;
+				display: block;
+				text-align: center;
+				line-height: 50px;
+				font-size: 30px;
+				font-family: kaiti;
+				text-decoration: none;
+				font-weight: bold;
+				text-shadow: 0 0 5px #ffff00;
+			}
+			#gameOver{
+				position: absolute;
+				width: 100%;
+				text-align: center;
+				line-height: 50px;
+				font-size: 30px;
+				color: #ff6600;
+				text-shadow: 0 0 5px #ff0;
+				top: 180px;
+				font-weight: bold;
+				font-family: arial;
+				display: none;
+			}
+			#wolfBox>div{
+				position: absolute;
+				width: 108px;
+				height: 101px;
+				background: url(img/h.png);
+			}
+			#wolfBox>div:first-child{
+				left: 100px;
+				top: 110px;
+			}
+			#wolfBox>div:nth-child(2){
+				left: 188px;
+				top: 140px;
+			}
+			#wolfBox>div:nth-child(3){
+				left: 18px;
+				top: 158px;
+			}
+			#wolfBox>div:nth-child(4){
+				left: 104px;
+				top: 189px;
+			}
+			#wolfBox>div:nth-child(5){
+				left: 198px;
+				top: 210px;
+			}
+			#wolfBox>div:nth-child(6){
+				left: 18px;
+				top: 218px;
+			}
+			#wolfBox>div:nth-child(7){
+				left: 120px;
+				top: 270px;
+			}
+			#wolfBox>div:nth-child(8){
+				left: 29px;
+				top: 292px;
+			}
+			#wolfBox>div:nth-child(9){
+				left: 206px;
+				top: 294px;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="outer">
+			<div id="score">0</div>
+			<div id="timeBar"></div>
+			<div id="menu">
+				<a href="javasccript:;">开始</a>
+			</div>
+			<div id="gameOver">GameOver!</div>
+			<div id="wolfBox">
+				<!--<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div></div>-->
+			</div>
+		</div>
+		<script type="text/javascript">
+			var score = document.getElementById('score');
+			var timeBar = document.getElementById('timeBar');
+			var menu = document.getElementById('menu');
+			var gameOver = document.getElementById('gameOver');
+			var wolfBox = document.getElementById('wolfBox');
+			var scoreNum = 0;//统计分数
+			var gameStartT = null;//游戏开始的计时器
+			var timeBarT = null;//时间进度条的计时器
+			var w = timeBar.offsetWidth;//定义时间总长度
+			var ww = w;//定义最大值
+			//创建存储位置对象
+			var arrPos = [
+				{l:100+"px",t:110+"px"},
+				{l:188+"px",t:140+"px"},
+				{l:18+"px",t:158+"px"},
+				{l:104+"px",t:189+"px"},
+				{l:198+"px",t:210+"px"},
+				{l:18+"px",t:218+"px"},
+				{l:120+"px",t:270+"px"},
+				{l:29+"px",t:292+"px"},
+				{l:206+"px",t:294+"px"},
+			];
+			//创建数组，通过存放近几次的位置坐标，用来判断新生成的位置是否重复
+			var arrP = [];
+			//点击开始游戏开始菜单隐藏
+			menu.onclick = function(){
+				this.style.display = 'none';
+				gameStart();//开始游戏
+				gameTime();//计时结束
+			}
+			
+			//创建随机函数 用来取随机数组中的9个元素随机值
+			function rand(min,max){
+				return parseInt(Math.random() * (max - min + 1) + min);
+			}
+			function createWolf(){
+				//创建狼的DOM对象
+				var wolf = document.createElement('div');
+				wolf.index = 0;//天生属性用来控制背景图的定位
+				wolf.upFlag = true;//天生会不会钻 向上还是向下
+				wolf.ifClick = false;//用来判断有没有被点中
+				var pos = rand(0,8);
+				while(arrP.indexOf(pos) != -1){
+					//如果数组中有这个位置则从新生成
+					pos = rand(0,8);
+					//限制存放区位置的位置记录数量，避免出现最后随机数进不去的情况
+					if(arrP.length > 4){
+						arrP.splice(0,1);
+					}
+				}
+				arrP.push(pos);
+				//根据创建出来的随机位置去arrPos数组中取值
+				wolf.style.left = arrPos[pos].l;
+				wolf.style.top = arrPos[pos].t;
+				//设置生成灰太狼和小灰灰的概率
+				var who = 'h';
+				Math.random() > 0.9 ? who = 'x': who = 'h';
+				wolf.style.background = "url(img/" + who + ".png)";
+				wolfBox.appendChild(wolf);
+				//绑定点击事件，添加锅打效果
+				wolf.onclick = function(){
+					wolf.index = 6;
+					wolf.ifClick = true;
+					wolf.onclick = null;//接触事件绑定禁止连续点击
+					if(who == 'h'){
+						scoreNum += 10;
+						w += 5;
+						timeBar.style.width = w + 'px';
+					}else{
+						scoreNum -= 10;
+						w -= 5;
+						timeBar.style.width = w + 'px';
+					}
+					if(scoreNum <= 0){
+						scoreNum = 0;
+					}
+					if(w >= ww){
+						w = ww;
+					}
+					score.innerHTML = scoreNum;
+				}
+				wolf.upTime = setInterval(function(){
+					//通过控制wolf.upFlag的值用来控制狼运动方向
+					if(wolf.upFlag || wolf.ifClick){
+						wolf.index++;
+					}else{
+						wolf.index--;
+					}
+					
+					//判断wolf.index是否到达临界点
+					if(wolf.index >= 5){
+						//等wolf完全钻出来的时候改变wolf.upFlag的值，改变方向
+						wolf.upFlag = false;
+					}
+					if (wolf.index < 0 || wolf.index >9){
+						//如果狼完全缩回去则通知这个狼的计时器并且删除这个wolf所在的div
+						clearInterval(wolf.upTime);
+						wolfBox.removeChild(wolf);
+					}
+					//根据wolf.index设置狼的背景图
+					wolf.style.backgroundPosition = -108 * wolf.index + 'px 0';
+				},100);
+			}
+			//每一个狼都有自己的计时器相互不影响
+			
+			
+			function gameStart(){
+				gameStartT = setInterval(function(){
+					createWolf();
+				},500)
+			}
+			//删除wolf的方法
+			function gameTime(){
+				timeBarT = setInterval(function(){
+					w--;
+					if(w <= 0){
+						clearInterval(gameStartT);
+						gameOver.style.display = 'block';
+						clearInterval(timeBarT);
+					}
+					timeBar.style.width = w +'px';
+				},100);
+			}
+		</script>
+	</body>
+</html>
